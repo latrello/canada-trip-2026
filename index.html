@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Canada Trip 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #F5F5F3; /* 日式米白 */
+            color: #3E3E3E;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 隱藏捲軸但保留功能 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* 日式卡片陰影 */
+        .zen-shadow {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 底部導航欄模糊效果 */
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+
+        /* 標籤樣式 */
+        .tag-food { background-color: #FEE2E2; color: #991B1B; } /* 淡紅 */
+        .tag-photo { background-color: #E0E7FF; color: #3730A3; } /* 淡藍 */
+        .tag-tips { background-color: #FEF3C7; color: #92400E; } /* 淡黃 */
+        .tag-res { background-color: #D1FAE5; color: #065F46; } /* 淡綠 */
+    </style>
+</head>
+<body>
+
+<div id="app" class="h-screen flex flex-col overflow-hidden">
+
+    <header class="pt-12 pb-4 px-6 bg-white z-10 sticky top-0 zen-shadow">
+        <div class="flex justify-between items-end">
+            <div>
+                <p class="text-xs text-gray-400 tracking-widest uppercase mb-1">Travel Itinerary</p>
+                <h1 class="text-2xl font-bold text-stone-800">加拿大極光之旅</h1>
+            </div>
+            <div class="text-right">
+                <div class="text-3xl text-stone-600"><i :class="currentWeatherIcon"></i></div>
+                <p class="text-xs text-gray-400 mt-1">{{ currentWeatherTemp }}</p>
+            </div>
+        </div>
+        
+        <div v-if="currentTab === 'schedule'" class="flex overflow-x-auto space-x-4 mt-6 pb-2 no-scrollbar">
+            <div v-for="(day, index) in itinerary" :key="index" 
+                 @click="activeDay = index"
+                 class="flex-shrink-0 flex flex-col items-center justify-center w-14 h-16 rounded-xl transition-all duration-300"
+                 :class="activeDay === index ? 'bg-stone-800 text-white shadow-lg' : 'bg-white text-gray-400 border border-gray-100'">
+                <span class="text-xs font-medium">Day</span>
+                <span class="text-lg font-bold">{{ index + 1 }}</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto bg-[#F5F5F3] p-4 pb-24 no-scrollbar scroll-smooth">
+        
+        <div v-if="currentTab === 'schedule'">
+            <div v-for="(day, dIndex) in itinerary" :key="dIndex">
+                <div v-if="activeDay === dIndex" class="space-y-4 animate-fade-in">
+                    
+                    <div class="flex items-center space-x-2 mb-2 px-1">
+                        <span class="text-sm font-bold text-stone-400">{{ day.date }}</span>
+                        <span class="h-1 w-1 rounded-full bg-stone-300"></span>
+                        <span class="text-sm font-medium text-stone-500">{{ day.weekday }}</span>
+                        <span class="ml-auto text-xs px-2 py-1 rounded bg-stone-200 text-stone-600">
+                            <i class="fas fa-map-marker-alt mr-1"></i>{{ day.city }}
+                        </span>
+                    </div>
+
+                    <div v-for="(event, eIndex) in day.events" :key="eIndex" 
+                         class="bg-white rounded-2xl p-5 zen-shadow border-l-4"
+                         :class="getCategoryColor(event.type)">
+                        
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs font-bold px-2 py-1 rounded bg-gray-100 text-gray-600">
+                                    {{ event.time }}
+                                </span>
+                                <span v-if="event.tag" :class="getTagClass(event.tagType)" class="text-xs font-bold px-2 py-1 rounded">
+                                    {{ event.tag }}
+                                </span>
+                            </div>
+                            <button @click="openMap(event.location)" class="text-stone-400 hover:text-blue-500 transition-colors">
+                                <i class="fas fa-location-arrow text-lg"></i>
+                            </button>
+                        </div>
+
+                        <h3 class="text-lg font-bold text-stone-800 mb-1 leading-snug">{{ event.title }}</h3>
+                        <p class="text-sm text-gray-500 mb-3 flex items-center">
+                            <i class="fas fa-map-pin w-4 text-center mr-1 text-xs"></i> {{ event.location }}
+                        </p>
+
+                        <div v-if="event.note" class="mt-3 pt-3 border-t border-dashed border-gray-100">
+                            <p class="text-sm text-stone-600 leading-relaxed">
+                                <span v-if="event.highlight" class="font-bold text-amber-600">
+                                    <i class="fas fa-lightbulb mr-1"></i>
+                                </span>
+                                <span v-html="event.note"></span>
+                            </p>
+                        </div>
+                        
+                        <div v-if="event.mustList" class="mt-2 flex flex-wrap gap-2">
+                            <span v-for="item in event.mustList" class="text-xs px-2 py-1 bg-red-50 text-red-600 rounded border border-red-100">
+                                <i class="fas fa-thumbs-up mr-1"></i>{{ item }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 bg-stone-800 rounded-2xl p-5 text-white shadow-lg">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs uppercase tracking-wider text-stone-400">Tonight's Stay</span>
+                            <i class="fas fa-bed text-stone-400"></i>
+                        </div>
+                        <h3 class="font-bold text-lg">{{ day.hotel }}</h3>
+                        <button @click="openMap(day.hotel)" class="mt-3 w-full py-2 bg-stone-700 rounded-lg text-sm hover:bg-stone-600 transition">
+                            導航至飯店
+                        </button>
+                    </div>
+
+                    <div class="h-10"></div> </div>
+            </div>
+        </div>
+
+        <div v-if="currentTab === 'tools'" class="space-y-4 animate-fade-in">
+            <div class="bg-white rounded-2xl p-5 zen-shadow">
+                <h3 class="font-bold text-lg mb-4 border-b pb-2">✈️ 航班資訊</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="text-xs text-gray-400">去程 (Day 1)</div>
+                            <div class="font-bold text-stone-800">BR010</div>
+                            <div class="text-sm">TPE 23:55 ➝ YVR 18:35</div>
+                        </div>
+                    </div>
+                     <div class="flex justify-between items-center">
+                        <div>
+                            <div class="text-xs text-gray-400">國內線 (Day 7)</div>
+                            <div class="font-bold text-stone-800">YVR ➝ YZF</div>
+                            <div class="text-sm">15:45 - 20:57 (經 YEG)</div>
+                        </div>
+                    </div>
+                     <div class="flex justify-between items-center">
+                        <div>
+                            <div class="text-xs text-gray-400">回程 (Day 12)</div>
+                            <div class="font-bold text-stone-800">BR009</div>
+                            <div class="text-sm">YVR 00:15 ➝ TPE 05:15(+1)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 zen-shadow">
+                <h3 class="font-bold text-lg mb-4 border-b pb-2">💰 快速記帳</h3>
+                <div class="flex gap-2 mb-4">
+                    <input type="text" placeholder="項目" v-model="newExpenseName" class="flex-1 bg-gray-50 border-none rounded-lg p-3 text-sm focus:ring-1 focus:ring-stone-400">
+                    <input type="number" placeholder="$CAD" v-model="newExpenseAmount" class="w-24 bg-gray-50 border-none rounded-lg p-3 text-sm focus:ring-1 focus:ring-stone-400">
+                </div>
+                <button @click="addExpense" class="w-full bg-stone-800 text-white py-3 rounded-xl font-bold text-sm shadow-lg active:scale-95 transition-transform">
+                    新增支出
+                </button>
+                
+                <div class="mt-6 space-y-2">
+                    <div v-for="(exp, index) in expenses" :key="index" class="flex justify-between text-sm py-2 border-b border-gray-50">
+                        <span>{{ exp.name }}</span>
+                        <span class="font-mono font-bold text-stone-600">${{ exp.amount }}</span>
+                    </div>
+                    <div class="flex justify-between pt-2 font-bold text-lg text-stone-800">
+                        <span>Total</span>
+                        <span>${{ totalExpense }}</span>
+                    </div>
+                </div>
+            </div>
+
+             <div class="bg-white rounded-2xl p-5 zen-shadow border-l-4 border-red-400">
+                <h3 class="font-bold text-lg mb-2">🆘 緊急聯絡</h3>
+                <div class="space-y-2 text-sm text-gray-600">
+                    <p><span class="font-bold">加拿大報案：</span> 911</p>
+                    <p><span class="font-bold">外交部緊急聯絡：</span> +1-604-377-8730 (溫哥華)</p>
+                    <p class="text-xs text-gray-400 mt-2">外交部旅外國人急難救助全球免付費專線：800-0885-0885</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <nav class="fixed bottom-0 w-full glass-nav pb-safe pt-2 px-6 pb-6 z-50">
+        <div class="flex justify-around items-center">
+            <button @click="currentTab = 'schedule'" :class="currentTab === 'schedule' ? 'text-stone-800 scale-110' : 'text-gray-300'" class="flex flex-col items-center transition-all duration-300">
+                <i class="fas fa-map-marked-alt text-xl mb-1"></i>
+                <span class="text-[10px] font-medium">行程</span>
+            </button>
+            
+            <div class="w-12 h-12 bg-stone-800 rounded-full -mt-8 flex items-center justify-center shadow-xl border-4 border-[#F5F5F3]" @click="currentTab = 'schedule'; activeDay = getCurrentDayIndex()">
+                <i class="fas fa-compass text-white text-lg"></i>
+            </div>
+
+            <button @click="currentTab = 'tools'" :class="currentTab === 'tools' ? 'text-stone-800 scale-110' : 'text-gray-300'" class="flex flex-col items-center transition-all duration-300">
+                <i class="fas fa-suitcase text-xl mb-1"></i>
+                <span class="text-[10px] font-medium">工具</span>
+            </button>
+        </div>
+    </nav>
+
+</div>
+
+<script>
+    const { createApp, ref, computed } = Vue;
+
+    createApp({
+        setup() {
+            const currentTab = ref('schedule');
+            const activeDay = ref(0);
+            
+            // 記帳功能
+            const newExpenseName = ref('');
+            const newExpenseAmount = ref('');
+            const expenses = ref([
+                { name: 'Seabus Ticket', amount: 4.5 },
+                { name: 'Lunch @ Lonsdale', amount: 25 }
+            ]);
+            
+            const addExpense = () => {
+                if(newExpenseName.value && newExpenseAmount.value) {
+                    expenses.value.push({
+                        name: newExpenseName.value,
+                        amount: parseFloat(newExpenseAmount.value)
+                    });
+                    newExpenseName.value = '';
+                    newExpenseAmount.value = '';
+                }
+            };
+
+            const totalExpense = computed(() => {
+                return expenses.value.reduce((acc, curr) => acc + curr.amount, 0).toFixed(2);
+            });
+
+            // 天氣模擬 (2月加拿大預設)
+            const weatherIcons = {
+                'Vancouver': 'fas fa-cloud-rain',
+                'Victoria': 'fas fa-cloud-sun',
+                'Yellowknife': 'fas fa-snowflake'
+            };
+            const weatherTemps = {
+                'Vancouver': '6°C',
+                'Victoria': '7°C',
+                'Yellowknife': '-25°C'
+            };
+
+            // 行程資料 (從圖片解析並增強)
+            const itinerary = ref([
+                {
+                    date: '2月18日', weekday: '週三', city: 'Vancouver',
+                    hotel: '溫哥華市中心公寓(LXY condo)',
+                    events: [
+                        { time: '23:55', title: '抵達溫哥華', type: 'transport', location: 'YVR Airport', note: '航班 BR010。抵達後記得先取車/Check-in。', tag: 'Arrival', tagType: 'tips' }
+                    ]
+                },
+                {
+                    date: '2月19日', weekday: '週四', city: 'North Van',
+                    hotel: '溫哥華市中心公寓(LXY condo)',
+                    events: [
+                        { time: 'Morning', title: '北溫碼頭 & Lonsdale Quay', type: 'sight', location: 'Lonsdale Quay Market', note: '搭乘 Seabus 從 Waterfront 出發僅需 12 分鐘。市場開放 09:00-19:00。', tag: 'Seabus', tagType: 'transport' },
+                        { time: 'Spot', title: 'The Polygon Gallery', type: 'sight', location: 'The Polygon Gallery', note: '免費參觀的美術館，位於碼頭旁，建築本身很美。', tag: 'Free', tagType: 'tips' },
+                        { time: 'Afternoon', title: '煤氣鎮 Gastown', type: 'sight', location: 'Gastown Steam Clock', note: '蒸汽鐘每 15 分鐘鳴笛，整點唱歌。<b>💡攝影攻略：</b>想要拍到沒人的照片，建議晚上 9 點再來。', highlight: true, tag: 'Photo Spot', tagType: 'photo' }
+                    ]
+                },
+                {
+                    date: '2月20日', weekday: '週五', city: 'Vancouver',
+                    hotel: '溫哥華市中心公寓(LXY condo)',
+                    events: [
+                        { time: 'Daytime', title: '卡皮拉諾吊橋公園', type: 'sight', location: 'Capilano Suspension Bridge', note: '<b>💡交通攻略：</b>在 Canada Place 搭乘免費接駁車。售票亭門口就是上車點。', highlight: true, tag: 'Free Shuttle', tagType: 'transport' }
+                    ]
+                },
+                {
+                    date: '2月21日', weekday: '週六', city: 'Vancouver',
+                    hotel: '溫哥華市中心公寓(LXY condo)',
+                    events: [
+                        { time: 'Afternoon', title: '史丹利公園 & English Bay', type: 'sight', location: 'English Bay Beach', note: '<b>📷 攝影攻略：</b>這裡是溫哥華看夕陽最美的地方，別錯過 Inukshuk 石像。', highlight: true, tag: 'Sunset', tagType: 'photo' },
+                        { time: 'Spot', title: '固蘭島 Granville Island', type: 'food', location: 'Granville Island Public Market', note: '必吃 Clam Chowder 巧達濃湯與甜甜圈。', mustList: ['Lee\'s Donuts', 'Clam Chowder'], tag: 'Foodie', tagType: 'food' }
+                    ]
+                },
+                {
+                    date: '2月22日', weekday: '週日', city: 'Vancouver',
+                    hotel: '溫哥華市中心公寓(LXY condo)',
+                    events: [
+                        { time: 'Daytime', title: '鐵道鎮購物中心', type: 'shop', location: 'Metrotown', note: 'BC省最大的購物中心，適合補貨伴手禮。', tag: 'Shopping', tagType: 'tips' }
+                    ]
+                },
+                {
+                    date: '2月23日', weekday: '週一', city: 'Victoria',
+                    hotel: '溫哥華市中心公寓(LXY condo)',
+                    events: [
+                        { time: 'Transit', title: '前往維多利亞', type: 'transport', location: 'Tsawwassen Ferry Terminal', note: '自駕或搭車到 Bridgeport 轉 620 公車。船程 1.5 小時。', tag: 'Ferry', tagType: 'transport' },
+                        { time: 'Lunch', title: '維多利亞漁人碼頭', type: 'food', location: 'Fisherman\'s Wharf Park', note: '<b>🍴 必吃美食：</b>Red Fish Blue Fish 炸魚薯條 (島上最好吃！)。也可以看海獅海豹。', mustList: ['Red Fish Blue Fish', '炸魚薯條'], highlight: true, tag: 'Must Eat', tagType: 'food' },
+                        { time: 'Spot', title: '唐人街 & 番攤巷', type: 'sight', location: 'Fan Tan Alley', note: '加拿大最窄的街道，很有特色。', tag: 'Photo', tagType: 'photo' },
+                        { time: 'Night', title: 'BC省議會大廈', type: 'sight', location: 'Legislative Assembly of British Columbia', note: '晚上會點燈，夜景非常漂亮 (內港夜景)。', tag: 'Night View', tagType: 'photo' }
+                    ]
+                },
+                {
+                    date: '2月24日', weekday: '週二', city: 'Yellowknife',
+                    hotel: 'Nova Inn Yellowknife',
+                    events: [
+                        { time: '15:45', title: '飛往黃刀鎮', type: 'transport', location: 'YVR Airport', note: '轉機 YEG，預計 20:57 抵達 YZF。', tag: 'Flight', tagType: 'transport' },
+                        { time: '22:00', title: '追極光 (極光團接送)', type: 'sight', location: 'Yellowknife', note: '第一晚極光體驗！注意保暖，電池記得貼暖暖包。', tag: 'Aurora', tagType: 'photo' }
+                    ]
+                },
+                {
+                    date: '2月25日', weekday: '週三', city: 'Yellowknife',
+                    hotel: 'Nova Inn Yellowknife',
+                    events: [
+                        { time: '10:00', title: '黃刀鎮市區 Tour', type: 'sight', location: 'Yellowknife Visitor Centre', note: '領取極光證書、北緯60度打卡。', tag: 'Tour', tagType: 'tips' },
+                        { time: '22:00', title: '夢幻小屋極光', type: 'sight', location: 'Aurora Village', note: '在帳篷裡喝熱飲等極光。', tag: 'Aurora', tagType: 'photo' }
+                    ]
+                },
+                {
+                    date: '2月26日', weekday: '週四', city: 'Yellowknife',
+                    hotel: 'The Explorer Hotel',
+                    events: [
+                        { time: '14:00', title: '狗拉雪橇', type: 'sight', location: 'Yellowknife', note: '刺激好玩的體驗，記得戴護目鏡防雪。', tag: 'Activity', tagType: 'tips' },
+                        { time: '20:50', title: 'Aurora Village', type: 'sight', location: 'Aurora Village', note: '最後一晚極光守候。', tag: 'Aurora', tagType: 'photo' }
+                    ]
+                },
+                {
+                    date: '2月27日', weekday: '週五', city: 'Yellowknife',
+                    hotel: 'The Explorer Hotel',
+                    events: [
+                        { time: '11:00', title: '換飯店 & 冰上捕魚', type: 'sight', location: 'Great Slave Lake', note: 'Check out Nova Inn, Check in Explorer Hotel (16:00)。冰上撒網捕魚體驗。', tag: 'Check-in', tagType: 'res' }
+                    ]
+                },
+                {
+                    date: '2月28日', weekday: '週六', city: 'Transit',
+                    hotel: '飛機上',
+                    events: [
+                        { time: '04:30', title: '退房 & 前往機場', type: 'transport', location: 'Yellowknife Airport', note: '早起！班機 05:25 起飛。', tag: 'Early', tagType: 'tips' },
+                        { time: 'Morning', title: '抵達溫哥華', type: 'transport', location: 'Vancouver', note: '轉機回台灣前最後採購或休息。' }
+                    ]
+                },
+                {
+                    date: '3月1日', weekday: '週日', city: 'Transit',
+                    hotel: 'Home',
+                    events: [
+                        { time: '00:15', title: '飛往桃園', type: 'transport', location: 'YVR Airport', note: '航班 BR009。', tag: 'Flight', tagType: 'transport' }
+                    ]
+                },
+                {
+                    date: '3月2日', weekday: '週一', city: 'Taiwan',
+                    hotel: 'Sweet Home',
+                    events: [
+                        { time: '05:15', title: '抵達台灣', type: 'transport', location: 'TPE Airport', note: '歡迎回家！' }
+                    ]
+                }
+            ]);
+
+            const currentCity = computed(() => {
+                return itinerary.value[activeDay.value].city;
+            });
+
+            const currentWeatherIcon = computed(() => {
+                const city = itinerary.value[activeDay.value].city;
+                if (city.includes('Yellowknife')) return 'fas fa-snowflake';
+                if (city.includes('Vancouver') || city.includes('North Van')) return 'fas fa-cloud-rain';
+                return 'fas fa-cloud-sun';
+            });
+
+            const currentWeatherTemp = computed(() => {
+                const city = itinerary.value[activeDay.value].city;
+                return weatherTemps[city] || '5°C';
+            });
+
+            // Helper Functions
+            const openMap = (location) => {
+                window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`);
+            };
+
+            const getCategoryColor = (type) => {
+                switch(type) {
+                    case 'food': return 'border-l-red-400';
+                    case 'transport': return 'border-l-blue-400';
+                    case 'shop': return 'border-l-pink-400';
+                    case 'sight': return 'border-l-emerald-400';
+                    default: return 'border-l-gray-400';
+                }
+            };
+
+            const getTagClass = (type) => {
+                switch(type) {
+                    case 'food': return 'tag-food';
+                    case 'photo': return 'tag-photo';
+                    case 'tips': return 'tag-tips';
+                    case 'res': return 'tag-res';
+                    default: return 'bg-gray-200 text-gray-600';
+                }
+            };
+
+            const getCurrentDayIndex = () => {
+                // 簡單邏輯：預設第一天，實際可改成比對 new Date()
+                return 0;
+            };
+
+            return {
+                currentTab, activeDay, itinerary, 
+                currentCity, currentWeatherIcon, currentWeatherTemp,
+                openMap, getCategoryColor, getTagClass, getCurrentDayIndex,
+                expenses, newExpenseName, newExpenseAmount, addExpense, totalExpense
+            };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
