@@ -110,8 +110,8 @@
                                     {{ event.tag }}
                                 </span>
                             </div>
-                            <button @click="openMap(event.location)" class="text-stone-400 hover:text-blue-500 transition-colors">
-                                <i class="fas fa-location-arrow text-lg"></i>
+                            <button @click="openMap(event.location)" class="bg-blue-50 text-blue-500 w-8 h-8 rounded-full flex items-center justify-center hover:bg-blue-100 transition-colors shadow-sm active:scale-95">
+                                <i class="fas fa-location-arrow text-sm"></i>
                             </button>
                         </div>
 
@@ -141,10 +141,12 @@
                             <span class="text-xs uppercase tracking-wider text-stone-400">Tonight's Stay</span>
                             <i class="fas fa-bed text-stone-400"></i>
                         </div>
-                        <h3 class="font-bold text-lg">{{ day.hotel }}</h3>
-                        <button @click="openMap(day.hotel)" class="mt-3 w-full py-2 bg-stone-700 rounded-lg text-sm hover:bg-stone-600 transition">
-                            導航至飯店
-                        </button>
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-bold text-lg leading-tight pr-4">{{ day.hotel }}</h3>
+                            <button @click="openMap(day.hotel)" class="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-stone-700 rounded-full hover:bg-stone-600 transition shadow-md active:scale-90 text-amber-400">
+                                 <i class="fas fa-location-arrow text-lg"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="h-10"></div>
                 </div>
@@ -242,6 +244,48 @@
                 </div>
             </div>
 
+             <div class="bg-white rounded-2xl zen-shadow overflow-hidden">
+                <div class="bg-stone-600 text-white px-5 py-3 flex justify-between items-center">
+                    <span class="text-xs font-bold tracking-widest uppercase">Domestic Return</span>
+                    <span class="font-mono font-bold text-white">YZF-YVR</span>
+                </div>
+                <div class="p-5">
+                    <div class="flex justify-between items-end mb-4">
+                        <div>
+                            <div class="text-3xl font-bold text-stone-800">YZF</div>
+                            <div class="text-xs text-gray-500">黃刀鎮</div>
+                        </div>
+                        <i class="fas fa-plane text-stone-300 text-xl mb-2"></i>
+                        <div class="text-right">
+                            <div class="text-3xl font-bold text-stone-800">YVR</div>
+                            <div class="text-xs text-gray-500">溫哥華</div>
+                        </div>
+                    </div>
+                    
+                     <div class="grid grid-cols-2 gap-4 text-sm mb-4">
+                        <div>
+                            <div class="text-xs text-gray-400">Date</div>
+                            <div class="font-bold text-stone-700">Feb 28 (Sat)</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-400">Time</div>
+                            <div class="font-bold text-stone-700">05:25 - 07:17</div>
+                        </div>
+                    </div>
+                     <div class="border-t border-dashed border-gray-200 my-4"></div>
+                     <div class="grid grid-cols-2 gap-4 text-xs">
+                        <div>
+                            <div class="text-gray-400"><i class="fas fa-building mr-1"></i>出發航廈</div>
+                            <div class="font-bold text-stone-800">YZF Main</div>
+                        </div>
+                         <div>
+                            <div class="text-gray-400"><i class="fas fa-suitcase mr-1"></i>行李轉盤</div>
+                            <div class="font-bold text-stone-800">YVR Domestic</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="bg-white rounded-2xl zen-shadow overflow-hidden">
                 <div class="bg-stone-800 text-white px-5 py-3 flex justify-between items-center">
                     <span class="text-xs font-bold tracking-widest uppercase">Return</span>
@@ -298,297 +342,4 @@
                 <div class="mt-6 space-y-2">
                     <div v-for="(exp, index) in expenses" :key="index" class="flex justify-between text-sm py-2 border-b border-gray-50">
                         <span>{{ exp.name }}</span>
-                        <span class="font-mono font-bold text-stone-600">${{ exp.amount }}</span>
-                    </div>
-                    <div class="flex justify-between pt-2 font-bold text-lg text-stone-800">
-                        <span>Total</span>
-                        <span>${{ totalExpense }}</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-2xl p-5 zen-shadow border-l-4 border-red-400">
-                <h3 class="font-bold text-lg mb-2">🆘 緊急聯絡</h3>
-                <div class="space-y-2 text-sm text-gray-600">
-                    <p><span class="font-bold">加拿大報案：</span> 911</p>
-                    <p><span class="font-bold">外交部緊急聯絡：</span> +1-604-377-8730 (溫哥華)</p>
-                    <p class="text-xs text-gray-400 mt-2">外交部旅外國人急難救助全球免付費專線：800-0885-0885</p>
-                </div>
-            </div>
-        </div>
-
-    </main>
-
-    <nav class="fixed bottom-0 w-full glass-nav pb-safe pt-2 px-6 pb-6 z-50">
-        <div class="flex justify-around items-center">
-            <button @click="currentTab = 'schedule'" :class="currentTab === 'schedule' ? 'text-stone-800 scale-110' : 'text-gray-300'" class="flex flex-col items-center transition-all duration-300">
-                <i class="fas fa-map-marked-alt text-xl mb-1"></i>
-                <span class="text-[10px] font-medium">行程</span>
-            </button>
-            
-            <div class="w-12 h-12 bg-stone-800 rounded-full -mt-8 flex items-center justify-center shadow-xl border-4 border-[#F5F5F3]" @click="currentTab = 'schedule'; changeDay(getCurrentDayIndex())">
-                <i class="fas fa-compass text-white text-lg"></i>
-            </div>
-
-            <button @click="currentTab = 'tools'" :class="currentTab === 'tools' ? 'text-stone-800 scale-110' : 'text-gray-300'" class="flex flex-col items-center transition-all duration-300">
-                <i class="fas fa-suitcase text-xl mb-1"></i>
-                <span class="text-[10px] font-medium">工具</span>
-            </button>
-        </div>
-    </nav>
-
-</div>
-
-<script>
-    const { createApp, ref, computed, onMounted } = Vue;
-
-    createApp({
-        setup() {
-            const currentTab = ref('schedule');
-            const activeDay = ref(0);
-            
-            // 即時天氣相關變數
-            const weatherTemp = ref('--°C');
-            const weatherIcon = ref('fas fa-circle-notch');
-            const weatherLoading = ref(false);
-            const weatherCityName = ref('');
-
-            // 城市座標對照表 (用於呼叫 API)
-            const cityCoords = {
-                'Vancouver': { lat: 49.2827, lon: -123.1207, name: 'Vancouver' },
-                'North Van': { lat: 49.3107, lon: -123.0776, name: 'North Vancouver' },
-                'Victoria': { lat: 48.4284, lon: -123.3656, name: 'Victoria' },
-                'Yellowknife': { lat: 62.4540, lon: -114.3718, name: 'Yellowknife' },
-                'Transit': null, // 移動日不顯示特定天氣
-                'Taiwan': { lat: 25.0330, lon: 121.5654, name: 'Taipei' }
-            };
-
-            // 抓取即時天氣函數
-            const fetchWeather = async (cityKey) => {
-                const coords = cityCoords[cityKey];
-                if (!coords) {
-                    weatherTemp.value = '';
-                    weatherIcon.value = 'fas fa-plane'; 
-                    weatherCityName.value = 'In Transit';
-                    return;
-                }
-
-                weatherLoading.value = true;
-                weatherCityName.value = coords.name;
-                
-                try {
-                    // 使用 Open-Meteo API (無需 Key, 免費)
-                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&current=temperature_2m,weather_code&timezone=auto`;
-                    const response = await fetch(url);
-                    const data = await response.json();
-                    
-                    const temp = Math.round(data.current.temperature_2m);
-                    const code = data.current.weather_code;
-                    
-                    weatherTemp.value = `${temp}°C`;
-                    weatherIcon.value = getWeatherIcon(code);
-                } catch (error) {
-                    console.error('Weather fetch error:', error);
-                    weatherTemp.value = 'N/A';
-                    weatherIcon.value = 'fas fa-exclamation-circle';
-                } finally {
-                    weatherLoading.value = false;
-                }
-            };
-
-            // WMO 天氣代碼轉 FontAwesome Icon
-            const getWeatherIcon = (code) => {
-                if (code === 0) return 'fas fa-sun text-amber-400';
-                if (code >= 1 && code <= 3) return 'fas fa-cloud-sun text-gray-400';
-                if (code === 45 || code === 48) return 'fas fa-smog text-gray-400';
-                if (code >= 51 && code <= 67) return 'fas fa-cloud-rain text-blue-400';
-                if (code >= 71 && code <= 77) return 'fas fa-snowflake text-sky-200';
-                if (code >= 80 && code <= 82) return 'fas fa-cloud-showers-heavy text-blue-500';
-                if (code >= 95 && code <= 99) return 'fas fa-bolt text-yellow-500';
-                return 'fas fa-cloud text-gray-400';
-            };
-
-            // 切換日期時更新天氣
-            const changeDay = (index) => {
-                activeDay.value = index;
-                const city = itinerary.value[index].city;
-                fetchWeather(city);
-            };
-
-            // 記帳功能
-            const newExpenseName = ref('');
-            const newExpenseAmount = ref('');
-            const expenses = ref([
-                { name: 'Seabus Ticket', amount: 4.5 },
-                { name: 'Lunch @ Lonsdale', amount: 25 }
-            ]);
-            
-            const addExpense = () => {
-                if(newExpenseName.value && newExpenseAmount.value) {
-                    expenses.value.push({
-                        name: newExpenseName.value,
-                        amount: parseFloat(newExpenseAmount.value)
-                    });
-                    newExpenseName.value = '';
-                    newExpenseAmount.value = '';
-                }
-            };
-
-            const totalExpense = computed(() => {
-                return expenses.value.reduce((acc, curr) => acc + curr.amount, 0).toFixed(2);
-            });
-
-            const itinerary = ref([
-                {
-                    date: '2月18日', weekday: '週三', city: 'Vancouver',
-                    hotel: '溫哥華市中心公寓(LXY condo)',
-                    events: [
-                        { time: '23:55', title: '抵達溫哥華', type: 'transport', location: 'YVR Airport', note: '航班 BR010。抵達後記得先取車/Check-in。', tag: 'Arrival', tagType: 'tips' }
-                    ]
-                },
-                {
-                    date: '2月19日', weekday: '週四', city: 'North Van',
-                    hotel: '溫哥華市中心公寓(LXY condo)',
-                    events: [
-                        { time: 'Morning', title: '北溫碼頭 & Lonsdale Quay', type: 'sight', location: 'Lonsdale Quay Market', note: '搭乘 Seabus 從 Waterfront 出發僅需 12 分鐘。市場開放 09:00-19:00。', tag: 'Seabus', tagType: 'transport' },
-                        { time: 'Spot', title: 'The Polygon Gallery', type: 'sight', location: 'The Polygon Gallery', note: '免費參觀的美術館，位於碼頭旁，建築本身很美。', tag: 'Free', tagType: 'tips' },
-                        { time: 'Afternoon', title: '煤氣鎮 Gastown', type: 'sight', location: 'Gastown Steam Clock', note: '蒸汽鐘每 15 分鐘鳴笛，整點唱歌。<b>💡攝影攻略：</b>想要拍到沒人的照片，建議晚上 9 點再來。', highlight: true, tag: 'Photo Spot', tagType: 'photo' }
-                    ]
-                },
-                {
-                    date: '2月20日', weekday: '週五', city: 'Vancouver',
-                    hotel: '溫哥華市中心公寓(LXY condo)',
-                    events: [
-                        { time: 'Daytime', title: '卡皮拉諾吊橋公園', type: 'sight', location: 'Capilano Suspension Bridge', note: '<b>💡交通攻略：</b>在 Canada Place 搭乘免費接駁車。售票亭門口就是上車點。', highlight: true, tag: 'Free Shuttle', tagType: 'transport' }
-                    ]
-                },
-                {
-                    date: '2月21日', weekday: '週六', city: 'Vancouver',
-                    hotel: '溫哥華市中心公寓(LXY condo)',
-                    events: [
-                        { time: 'Afternoon', title: '史丹利公園 & English Bay', type: 'sight', location: 'English Bay Beach', note: '<b>📷 攝影攻略：</b>這裡是溫哥華看夕陽最美的地方，別錯過 Inukshuk 石像。', highlight: true, tag: 'Sunset', tagType: 'photo' },
-                        { time: 'Spot', title: '固蘭島 Granville Island', type: 'food', location: 'Granville Island Public Market', note: '必吃 Clam Chowder 巧達濃湯與甜甜圈。', mustList: ['Lee\'s Donuts', 'Clam Chowder'], tag: 'Foodie', tagType: 'food' }
-                    ]
-                },
-                {
-                    date: '2月22日', weekday: '週日', city: 'Vancouver',
-                    hotel: '溫哥華市中心公寓(LXY condo)',
-                    events: [
-                        { time: 'Daytime', title: '鐵道鎮購物中心', type: 'shop', location: 'Metrotown', note: 'BC省最大的購物中心，適合補貨伴手禮。', tag: 'Shopping', tagType: 'tips' }
-                    ]
-                },
-                {
-                    date: '2月23日', weekday: '週一', city: 'Victoria',
-                    hotel: '溫哥華市中心公寓(LXY condo)',
-                    events: [
-                        { time: 'Transit', title: '前往維多利亞', type: 'transport', location: 'Tsawwassen Ferry Terminal', note: '自駕或搭車到 Bridgeport 轉 620 公車。船程 1.5 小時。', tag: 'Ferry', tagType: 'transport' },
-                        { time: 'Lunch', title: '維多利亞漁人碼頭', type: 'food', location: 'Fisherman\'s Wharf Park', note: '<b>🍴 必吃美食：</b>Red Fish Blue Fish 炸魚薯條 (島上最好吃！)。也可以看海獅海豹。', mustList: ['Red Fish Blue Fish', '炸魚薯條'], highlight: true, tag: 'Must Eat', tagType: 'food' },
-                        { time: 'Spot', title: '唐人街 & 番攤巷', type: 'sight', location: 'Fan Tan Alley', note: '加拿大最窄的街道，很有特色。', tag: 'Photo', tagType: 'photo' },
-                        { time: 'Night', title: 'BC省議會大廈', type: 'sight', location: 'Legislative Assembly of British Columbia', note: '晚上會點燈，夜景非常漂亮 (內港夜景)。', tag: 'Night View', tagType: 'photo' }
-                    ]
-                },
-                {
-                    date: '2月24日', weekday: '週二', city: 'Yellowknife',
-                    hotel: 'Nova Inn Yellowknife',
-                    events: [
-                        { time: '15:45', title: '飛往黃刀鎮', type: 'transport', location: 'YVR Airport', note: '轉機 YEG，預計 20:57 抵達 YZF。', tag: 'Flight', tagType: 'transport' },
-                        { time: '22:00', title: '追極光 (極光團接送)', type: 'sight', location: 'Yellowknife', note: '第一晚極光體驗！注意保暖，電池記得貼暖暖包。', tag: 'Aurora', tagType: 'photo' }
-                    ]
-                },
-                {
-                    date: '2月25日', weekday: '週三', city: 'Yellowknife',
-                    hotel: 'Nova Inn Yellowknife',
-                    events: [
-                        { time: '10:00', title: '黃刀鎮市區 Tour', type: 'sight', location: 'Yellowknife Visitor Centre', note: '領取極光證書、北緯60度打卡。', tag: 'Tour', tagType: 'tips' },
-                        { time: '22:00', title: '夢幻小屋極光', type: 'sight', location: 'Aurora Village', note: '在帳篷裡喝熱飲等極光。', tag: 'Aurora', tagType: 'photo' }
-                    ]
-                },
-                {
-                    date: '2月26日', weekday: '週四', city: 'Yellowknife',
-                    hotel: 'The Explorer Hotel',
-                    events: [
-                        { time: '14:00', title: '狗拉雪橇', type: 'sight', location: 'Yellowknife', note: '刺激好玩的體驗，記得戴護目鏡防雪。', tag: 'Activity', tagType: 'tips' },
-                        { time: '20:50', title: 'Aurora Village', type: 'sight', location: 'Aurora Village', note: '最後一晚極光守候。', tag: 'Aurora', tagType: 'photo' }
-                    ]
-                },
-                {
-                    date: '2月27日', weekday: '週五', city: 'Yellowknife',
-                    hotel: 'The Explorer Hotel',
-                    events: [
-                        { time: '11:00', title: '換飯店 & 冰上捕魚', type: 'sight', location: 'Great Slave Lake', note: 'Check out Nova Inn, Check in Explorer Hotel (16:00)。冰上撒網捕魚體驗。', tag: 'Check-in', tagType: 'res' }
-                    ]
-                },
-                {
-                    date: '2月28日', weekday: '週六', city: 'Transit',
-                    hotel: '飛機上',
-                    events: [
-                        { time: '04:30', title: '退房 & 前往機場', type: 'transport', location: 'Yellowknife Airport', note: '早起！班機 05:25 起飛。', tag: 'Early', tagType: 'tips' },
-                        { time: 'Morning', title: '抵達溫哥華', type: 'transport', location: 'Vancouver', note: '轉機回台灣前最後採購或休息。' }
-                    ]
-                },
-                {
-                    date: '3月1日', weekday: '週日', city: 'Transit',
-                    hotel: 'Home',
-                    events: [
-                        { time: '00:15', title: '飛往桃園', type: 'transport', location: 'YVR Airport', note: '航班 BR009。', tag: 'Flight', tagType: 'transport' }
-                    ]
-                },
-                {
-                    date: '3月2日', weekday: '週一', city: 'Taiwan',
-                    hotel: 'Sweet Home',
-                    events: [
-                        { time: '05:15', title: '抵達台灣', type: 'transport', location: 'TPE Airport', note: '歡迎回家！' }
-                    ]
-                }
-            ]);
-
-            const currentCity = computed(() => {
-                return itinerary.value[activeDay.value].city;
-            });
-
-            const openMap = (location) => {
-                window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`);
-            };
-
-            const getCategoryColor = (type) => {
-                switch(type) {
-                    case 'food': return 'border-l-red-400';
-                    case 'transport': return 'border-l-blue-400';
-                    case 'shop': return 'border-l-pink-400';
-                    case 'sight': return 'border-l-emerald-400';
-                    default: return 'border-l-gray-400';
-                }
-            };
-
-            const getTagClass = (type) => {
-                switch(type) {
-                    case 'food': return 'tag-food';
-                    case 'photo': return 'tag-photo';
-                    case 'tips': return 'tag-tips';
-                    case 'res': return 'tag-res';
-                    default: return 'bg-gray-200 text-gray-600';
-                }
-            };
-
-            const getCurrentDayIndex = () => {
-                return 0;
-            };
-
-            // 初始化：載入第一天的天氣
-            onMounted(() => {
-                const initialCity = itinerary.value[activeDay.value].city;
-                fetchWeather(initialCity);
-            });
-
-            return {
-                currentTab, activeDay, changeDay,
-                itinerary, currentCity,
-                openMap, getCategoryColor, getTagClass, getCurrentDayIndex,
-                expenses, newExpenseName, newExpenseAmount, addExpense, totalExpense,
-                weatherTemp, weatherIcon, weatherLoading, weatherCityName
-            };
-        }
-    }).mount('#app');
-</script>
-</body>
-</html>
+                        <span class="font-mono font-bold text-stone-600">${{ exp.amount }}
