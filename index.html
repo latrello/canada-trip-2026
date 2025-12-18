@@ -43,6 +43,10 @@
         .tag-photo { background-color: #E0E7FF; color: #3730A3; } /* 淡藍 */
         .tag-tips { background-color: #FEF3C7; color: #92400E; } /* 淡黃 */
         .tag-res { background-color: #D1FAE5; color: #065F46; } /* 淡綠 */
+        
+        /* 動畫 */
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.5s; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
     </style>
 </head>
 <body>
@@ -56,14 +60,20 @@
                 <h1 class="text-2xl font-bold text-stone-800">加拿大極光之旅</h1>
             </div>
             <div class="text-right">
-                <div class="text-3xl text-stone-600"><i :class="currentWeatherIcon"></i></div>
-                <p class="text-xs text-gray-400 mt-1">{{ currentWeatherTemp }}</p>
+                <div v-if="weatherLoading" class="animate-pulse text-stone-300">
+                    <i class="fas fa-circle-notch fa-spin"></i>
+                </div>
+                <div v-else class="transition-all duration-500">
+                    <div class="text-3xl text-stone-600"><i :class="weatherIcon"></i></div>
+                    <p class="text-xs text-stone-500 mt-1 font-mono font-bold">{{ weatherTemp }}</p>
+                    <p class="text-[10px] text-gray-300">{{ weatherCityName }} Now</p>
+                </div>
             </div>
         </div>
         
         <div v-if="currentTab === 'schedule'" class="flex overflow-x-auto space-x-4 mt-6 pb-2 no-scrollbar">
             <div v-for="(day, index) in itinerary" :key="index" 
-                 @click="activeDay = index"
+                 @click="changeDay(index)"
                  class="flex-shrink-0 flex flex-col items-center justify-center w-14 h-16 rounded-xl transition-all duration-300"
                  :class="activeDay === index ? 'bg-stone-800 text-white shadow-lg' : 'bg-white text-gray-400 border border-gray-100'">
                 <span class="text-xs font-medium">Day</span>
@@ -136,13 +146,13 @@
                             導航至飯店
                         </button>
                     </div>
-
-                    <div class="h-10"></div> </div>
+                    <div class="h-10"></div>
+                </div>
             </div>
         </div>
 
         <div v-if="currentTab === 'tools'" class="space-y-4 animate-fade-in">
-            <div class="bg-white rounded-2xl p-5 zen-shadow">
+             <div class="bg-white rounded-2xl p-5 zen-shadow">
                 <h3 class="font-bold text-lg mb-4 border-b pb-2">✈️ 航班資訊</h3>
                 <div class="space-y-4">
                     <div class="flex justify-between items-center">
@@ -191,7 +201,7 @@
                 </div>
             </div>
 
-             <div class="bg-white rounded-2xl p-5 zen-shadow border-l-4 border-red-400">
+            <div class="bg-white rounded-2xl p-5 zen-shadow border-l-4 border-red-400">
                 <h3 class="font-bold text-lg mb-2">🆘 緊急聯絡</h3>
                 <div class="space-y-2 text-sm text-gray-600">
                     <p><span class="font-bold">加拿大報案：</span> 911</p>
@@ -210,7 +220,7 @@
                 <span class="text-[10px] font-medium">行程</span>
             </button>
             
-            <div class="w-12 h-12 bg-stone-800 rounded-full -mt-8 flex items-center justify-center shadow-xl border-4 border-[#F5F5F3]" @click="currentTab = 'schedule'; activeDay = getCurrentDayIndex()">
+            <div class="w-12 h-12 bg-stone-800 rounded-full -mt-8 flex items-center justify-center shadow-xl border-4 border-[#F5F5F3]" @click="currentTab = 'schedule'; changeDay(getCurrentDayIndex())">
                 <i class="fas fa-compass text-white text-lg"></i>
             </div>
 
@@ -224,13 +234,89 @@
 </div>
 
 <script>
-    const { createApp, ref, computed } = Vue;
+    const { createApp, ref, computed, onMounted } = Vue;
 
     createApp({
         setup() {
             const currentTab = ref('schedule');
             const activeDay = ref(0);
             
+            // 即時天氣相關變數
+            const weatherTemp = ref('--°C');
+            const weatherIcon = ref('fas fa-circle-notch');
+            const weatherLoading = ref(false);
+            const weatherCityName = ref('');
+
+            // 城市座標對照表 (用於呼叫 API)
+            const cityCoords = {
+                'Vancouver': { lat: 49.2827, lon: -123.1207, name: 'Vancouver' },
+                'North Van': { lat: 49.3107, lon: -123.0776, name: 'North Vancouver' },
+                'Victoria': { lat: 48.4284, lon: -123.3656, name: 'Victoria' },
+                'Yellowknife': { lat: 62.4540, lon: -114.3718, name: 'Yellowknife' },
+                'Transit': null, // 移動日不顯示特定天氣
+                'Taiwan': { lat: 25.0330, lon: 121.5654, name: 'Taipei' }
+            };
+
+            // 抓取即時天氣函數
+            const fetchWeather = async (cityKey) => {
+                const coords = cityCoords[cityKey];
+                if (!coords) {
+                    weatherTemp.value = '';
+                    weatherIcon.value = 'fas fa-plane'; // 飛行中
+                    weatherCityName.value = 'In Transit';
+                    return;
+                }
+
+                weatherLoading.value = true;
+                weatherCityName.value = coords.name;
+                
+                try {
+                    // 使用 Open-Meteo API (無需 Key, 免費)
+                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&current=temperature_2m,weather_code&timezone=auto`;
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    
+                    const temp = Math.round(data.current.temperature_2m);
+                    const code = data.current.weather_code;
+                    
+                    weatherTemp.value = `${temp}°C`;
+                    weatherIcon.value = getWeatherIcon(code);
+                } catch (error) {
+                    console.error('Weather fetch error:', error);
+                    weatherTemp.value = 'N/A';
+                    weatherIcon.value = 'fas fa-exclamation-circle';
+                } finally {
+                    weatherLoading.value = false;
+                }
+            };
+
+            // WMO 天氣代碼轉 FontAwesome Icon
+            const getWeatherIcon = (code) => {
+                // 0: Clear
+                if (code === 0) return 'fas fa-sun text-amber-400';
+                // 1-3: Cloudy
+                if (code >= 1 && code <= 3) return 'fas fa-cloud-sun text-gray-400';
+                // 45, 48: Fog
+                if (code === 45 || code === 48) return 'fas fa-smog text-gray-400';
+                // 51-67: Drizzle/Rain
+                if (code >= 51 && code <= 67) return 'fas fa-cloud-rain text-blue-400';
+                // 71-77: Snow
+                if (code >= 71 && code <= 77) return 'fas fa-snowflake text-sky-200';
+                // 80-82: Showers
+                if (code >= 80 && code <= 82) return 'fas fa-cloud-showers-heavy text-blue-500';
+                // 95-99: Thunderstorm
+                if (code >= 95 && code <= 99) return 'fas fa-bolt text-yellow-500';
+                
+                return 'fas fa-cloud text-gray-400';
+            };
+
+            // 切換日期時更新天氣
+            const changeDay = (index) => {
+                activeDay.value = index;
+                const city = itinerary.value[index].city;
+                fetchWeather(city);
+            };
+
             // 記帳功能
             const newExpenseName = ref('');
             const newExpenseAmount = ref('');
@@ -254,19 +340,6 @@
                 return expenses.value.reduce((acc, curr) => acc + curr.amount, 0).toFixed(2);
             });
 
-            // 天氣模擬 (2月加拿大預設)
-            const weatherIcons = {
-                'Vancouver': 'fas fa-cloud-rain',
-                'Victoria': 'fas fa-cloud-sun',
-                'Yellowknife': 'fas fa-snowflake'
-            };
-            const weatherTemps = {
-                'Vancouver': '6°C',
-                'Victoria': '7°C',
-                'Yellowknife': '-25°C'
-            };
-
-            // 行程資料 (從圖片解析並增強)
             const itinerary = ref([
                 {
                     date: '2月18日', weekday: '週三', city: 'Vancouver',
@@ -375,19 +448,6 @@
                 return itinerary.value[activeDay.value].city;
             });
 
-            const currentWeatherIcon = computed(() => {
-                const city = itinerary.value[activeDay.value].city;
-                if (city.includes('Yellowknife')) return 'fas fa-snowflake';
-                if (city.includes('Vancouver') || city.includes('North Van')) return 'fas fa-cloud-rain';
-                return 'fas fa-cloud-sun';
-            });
-
-            const currentWeatherTemp = computed(() => {
-                const city = itinerary.value[activeDay.value].city;
-                return weatherTemps[city] || '5°C';
-            });
-
-            // Helper Functions
             const openMap = (location) => {
                 window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`);
             };
@@ -413,15 +473,21 @@
             };
 
             const getCurrentDayIndex = () => {
-                // 簡單邏輯：預設第一天，實際可改成比對 new Date()
                 return 0;
             };
 
+            // 初始化：載入第一天的天氣
+            onMounted(() => {
+                const initialCity = itinerary.value[activeDay.value].city;
+                fetchWeather(initialCity);
+            });
+
             return {
-                currentTab, activeDay, itinerary, 
-                currentCity, currentWeatherIcon, currentWeatherTemp,
+                currentTab, activeDay, changeDay,
+                itinerary, currentCity,
                 openMap, getCategoryColor, getTagClass, getCurrentDayIndex,
-                expenses, newExpenseName, newExpenseAmount, addExpense, totalExpense
+                expenses, newExpenseName, newExpenseAmount, addExpense, totalExpense,
+                weatherTemp, weatherIcon, weatherLoading, weatherCityName // 新增的即時天氣變數
             };
         }
     }).mount('#app');
